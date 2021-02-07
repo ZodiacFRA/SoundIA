@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-SAMPLE_SIZE = 16000
+SAMPLE_RATE = 16000
 N_FRAMES = 1000
 HOP_SIZE = 64
 N_SAMPLES = N_FRAMES * HOP_SIZE
@@ -42,7 +42,7 @@ which makes it easy to change them as hyperparameters using the
 All processors also have a `name` that is used by `ProcessorGroup()`.
 """
 
-harmonic_synth = ddsp.synths.Harmonic(N_SAMPLES=N_SAMPLES, SAMPLE_SIZE=SAMPLE_SIZE)
+harmonic_synth = ddsp.synths.Harmonic(n_samples=N_SAMPLES, sample_rate=SAMPLE_RATE)
 
 """
 `get_controls()`
@@ -74,79 +74,41 @@ f0_hz = 440.0 * np.ones([1, N_FRAMES, 1], dtype=np.float32)
 These outputs violate the synthesizer's expectations:
 * Amplitude is not >= 0 (avoids phase shifts)
 * Harmonic distribution is not normalized (factorizes timbre and amplitude)
-* Fundamental frequency * n_harmonics > nyquist frequency (440 * 20 > 8000), which will lead to [aliasing](https://en.wikipedia.org/wiki/Aliasing).
+* Fundamental frequency * n_harmonics > nyquist frequency (440 * 20 > 8000),
+which will lead to [aliasing](https://en.wikipedia.org/wiki/Aliasing).
 """
-
 controls = harmonic_synth.get_controls(amps, harmonic_distribution, f0_hz)
 print(controls.keys())
 
-# Now let's see what they look like...
-time = np.linspace(0, N_SAMPLES / SAMPLE_SIZE, N_FRAMES)
-
-plt.figure(figsize=(18, 4))
-plt.subplot(131)
-plt.plot(time, controls['amplitudes'][0, :, 0])
-plt.xticks([0, 1, 2, 3, 4])
-plt.title('Amplitude')
-
-plt.subplot(132)
-plt.plot(time, controls['harmonic_distribution'][0, :, :])
-plt.xticks([0, 1, 2, 3, 4])
-plt.title('Harmonic Distribution')
-
-plt.subplot(133)
-plt.plot(time, controls['f0_hz'][0, :, 0])
-plt.xticks([0, 1, 2, 3, 4])
-_ = plt.title('Fundamental Frequency')
-
-"""Notice that
+""" The get_controls() function corrects the inputs:
 * Amplitudes are now all positive
 * The harmonic distribution sums to 1.0
 * All harmonics that are above the Nyquist frequency now have an amplitude of 0.
 
-The amplitudes and harmonic distribution are scaled by an "exponentiated sigmoid" function (`ddsp.core.exp_sigmoid`). There is nothing particularly special about this function (other functions can be specified as `scale_fn=` during construction), but it has several nice properties:
+The amplitudes and harmonic distribution are scaled by an "exponentiated sigmoid" function
+(`ddsp.core.exp_sigmoid`). There is nothing particularly special about this function
+(other functions can be specified as `scale_fn=` during construction), but it has several nice properties:
 * Output scales logarithmically with input (as does human perception of loudness).
 * Centered at 0, with max and min in reasonable range for normalized neural network outputs.
 * Max value of 2.0 to prevent signal getting too loud.
 * Threshold value of 1e-7 for numerical stability during training.
-"""
 
-x = tf.linspace(-10.0, 10.0, 1000)
-y = ddsp.core.exp_sigmoid(x)
-
-plt.figure(figsize=(18, 4))
-plt.subplot(121)
-plt.plot(x, y)
-
-plt.subplot(122)
-_ = plt.semilogy(x, y)
-
-"""## `get_signal()`
-
-Synthesizes audio from controls.
-"""
-
+Now use get_signal() To Synthesizes audio from controls. """
 audio = harmonic_synth.get_signal(**controls)
-#
-# print(audio.shape)
-# sd.play(np.asarray(audio).flatten(), SAMPLE_SIZE)
-# # play(audio)
-# # specplot(audio)
-# input()
 
-"""## `__call__()`
-
-Synthesizes audio directly from the raw inputs. `get_controls()` is called internally to turn them into valid control parameters.
+"""
+Otherwise we can use __call__() to directly
+Synthesizes audio from the raw inputs.
+`get_controls()` is called internally to turn them into valid control parameters.
 """
 
 audio = harmonic_synth(amps, harmonic_distribution, f0_hz)
 
-sd.play(np.asarray(audio).flatten(), SAMPLE_SIZE)
-# play(audio)
-# specplot(audio)
+sd.play(np.asarray(audio).flatten(), SAMPLE_RATE)
 input()
 
-"""# Example: Just for fun...
+"""
+Example just for fun...
 Let's run another example where we tweak some of the controls...
 """
 
@@ -180,7 +142,7 @@ f0_hz = f0_hz[np.newaxis, :, np.newaxis]
 controls = harmonic_synth.get_controls(amps, harmonic_distribution, f0_hz)
 
 # Plot!
-time = np.linspace(0, N_SAMPLES / SAMPLE_SIZE, N_FRAMES)
+time = np.linspace(0, N_SAMPLES / SAMPLE_RATE, N_FRAMES)
 
 plt.figure(figsize=(18, 4))
 plt.subplot(131)
@@ -200,8 +162,5 @@ _ = plt.title('Fundamental Frequency')
 
 audio = harmonic_synth.get_signal(**controls)
 
-print("fun")
-sd.play(np.asarray(audio).flatten(), SAMPLE_SIZE)
+sd.play(np.asarray(audio).flatten(), SAMPLE_RATE)
 input()
-# play(audio)
-# specplot(audio)
