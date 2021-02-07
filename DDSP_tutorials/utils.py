@@ -1,5 +1,36 @@
 import numpy as np
-from CONSTANTS import *
+import sounddevice as sd
+from scipy.io import wavfile
+import tensorflow as tf
+
+
+# SAMPLE_RATE = 16000
+SAMPLE_RATE = 48000
+N_FRAMES = 1000
+HOP_SIZE = 64
+N_SAMPLES = N_FRAMES * HOP_SIZE
+
+
+def play(audio, name):
+    print("Playing", name, audio[:10])
+    sd.play(np.asarray(audio).flatten(), SAMPLE_RATE)
+    input()
+
+
+def load_audio_signal(filepath, amp=1):
+    samplerate, data = wavfile.read(filepath)
+    if samplerate != SAMPLE_RATE:
+        print("WARNING: Sample rate mismatch for", filepath[filepath.rfind('/'):])
+    data = data * amp
+    return data[np.newaxis, :]
+
+
+def sin_phase(mod_rate, audio):
+  """Helper function."""
+  n_samples = audio.size
+  n_seconds = n_samples / SAMPLE_RATE
+  phase = tf.sin(tf.linspace(0.0, mod_rate * n_seconds * 2.0 * np.pi, n_samples))
+  return phase[tf.newaxis, :, tf.newaxis]
 
 
 def get_basic_inputs(n_harmonics=30):
@@ -15,7 +46,7 @@ def get_basic_inputs(n_harmonics=30):
     harmonic_distribution = harmonic_distribution[np.newaxis, :, :]
     # Fundamental frequency in Hz [batch, N_FRAMES, 1].
     f0_hz = 440.0 * np.ones([1, N_FRAMES, 1], dtype=np.float32)
-    return
+    return amps, harmonic_distribution, f0_hz
 
 
 def get_fun_inputs(n_harmonics=20):
@@ -41,3 +72,4 @@ def get_fun_inputs(n_harmonics=20):
     f0_hz[:100] *= np.linspace(2, 1, 100)**2
     f0_hz[200:1000] += 20 * np.sin(np.linspace(0, 8.0, 800) * 2 * np.pi * np.linspace(0, 1.0, 800))  * np.linspace(0, 1.0, 800)
     f0_hz = f0_hz[np.newaxis, :, np.newaxis]
+    return amps, harmonic_distribution, f0_hz

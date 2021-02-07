@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-from CONSTANTS import *
-from synth_inputs_generator import get_basic_inputs, get_fun_inputs
+from utils import *
+
 
 # Create synth
 harmonic_synth = ddsp.synths.Harmonic(n_samples=N_SAMPLES, sample_rate=SAMPLE_RATE)
@@ -24,6 +24,7 @@ audio = harmonic_synth.get_signal(**controls)
 # OR call the object directly, get_controls() is called internally
 audio = harmonic_synth(amps, harmonic_distribution, f0_hz)
 
+print("Playing basic inputs")
 sd.play(np.asarray(audio).flatten(), SAMPLE_RATE)
 input()
 
@@ -31,5 +32,6 @@ input()
 amps, harmonic_distribution, f0_hz = get_fun_inputs()
 audio = harmonic_synth(amps, harmonic_distribution, f0_hz)
 
+print("Playing fun inputs")
 sd.play(np.asarray(audio).flatten(), SAMPLE_RATE)
 input()
