@@ -198,7 +198,8 @@ if __name__ == '__main__':
     audio_filepath = "../audio_files/Risers_20.wav"
     audio = load_audio_signal(audio_filepath, 3)
     play(audio, "initial audio")
-    # Effects, located in `ddsp.effects` are different in that they take network outputs to transform a given audio signal.
+    # Effects, located in `ddsp.effects` are different in that they
+    # take network outputs to transform a given audio signal.
     # Some effects, such as Reverb, optionally have trainable parameters of their own
     play(add_reverb(audio), audio_filepath + " + reverb")
     play(add_fir_filter(audio), audio_filepath + " + FIR filter")

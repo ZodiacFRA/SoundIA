@@ -18,6 +18,7 @@ def play(audio, name):
 
 
 def load_audio_signal(filepath, amp=1):
+    ### Data needs to be 32bits floating points
     samplerate, data = wavfile.read(filepath)
     if samplerate != SAMPLE_RATE:
         print("WARNING: Sample rate mismatch for", filepath[filepath.rfind('/'):])
